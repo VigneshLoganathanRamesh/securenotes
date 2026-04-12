@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Admin Dashboard</h2>
+
+<ul class="nav nav-tabs mb-4" id="adminTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab">Registered Users</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="notes-tab" data-bs-toggle="tab" data-bs-target="#notes" type="button" role="tab">All Notes</button>
+    </li>
+</ul>
+
+<div class="tab-content" id="adminTabsContent">
+    <div class="tab-pane fade show active" id="users" role="tabpanel">
+        <h3>System Users</h3>
+        {% if users %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Notes Count</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.username }}</td>
+                    <td><span class="badge bg-{{ 'danger' if user.role == 'admin' else 'secondary' }}">{{ user.role }}</span></td>
+                    <td>{{ user.note_count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="alert alert-info">No users found.</div>
+        {% endif %}
+    </div>
+
+    <div class="tab-pane fade" id="notes" role="tabpanel">
+        <h3>All User Notes</h3>
+        {% if notes %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Author</th>
+                    <th>Content</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for note in notes %}
+                <tr>
+                    <td>{{ note.id }}</td>
+                    <td>{{ note.username }}</td>
+                    <td>
+                        {% if VULNERABLE_XSS %}
+                        {{ note.content | safe }}
+                        {% else %}
+                        {{ note.content }}
+                        {% endif %}
+                    </td>
+                    <td>{{ note.created_at }}</td>
+                    <td>
+                        <a href="{{ url_for('delete_note', note_id=note.id) }}"
+                           class="btn btn-sm btn-danger"
+                           onclick="return confirm('Delete this note?')">Delete</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="alert alert-info">No notes found.</div>
+        {% endif %}
+    </div>
+</div>
+
+{% if VULNERABLE_XSS or VULNERABLE_IDOR %}
+<div class="alert alert-warning mt-3">
+    <strong>⚠️ VULNERABLE MODE:</strong>
+    {% if VULNERABLE_XSS %}XSS protection disabled. {% endif %}
+    {% if VULNERABLE_IDOR %}IDOR checks bypassed. {% endif %}
+</div>
+{% endif %}
+{% endblock %}
