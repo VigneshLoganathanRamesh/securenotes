@@ -14,11 +14,7 @@
             <button type="submit" class="btn btn-primary">Save Changes</button>
             <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancel</a>
         </form>
-        {% if VULNERABLE_IDOR %}
-        <div class="alert alert-warning mt-3">
-            <strong>⚠️ VULNERABLE MODE:</strong> No ownership check – IDOR possible.
-        </div>
-        {% endif %}
+        
     </div>
 </div>
 {% endblock %}

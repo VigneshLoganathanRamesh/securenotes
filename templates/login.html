@@ -21,11 +21,7 @@
             <button type="submit" class="btn btn-primary">Login</button>
             <a href="{{ url_for('register') }}" class="btn btn-link">Register new account</a>
         </form>
-        {% if VULNERABLE_SQL %}
-        <div class="alert alert-warning mt-3">
-            <strong>⚠️ VULNERABLE MODE:</strong> SQL Injection is possible.
-        </div>
-        {% endif %}
+        
     </div>
 </div>
 {% endblock %}

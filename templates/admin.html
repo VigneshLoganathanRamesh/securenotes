@@ -80,12 +80,4 @@
         {% endif %}
     </div>
 </div>
-
-{% if VULNERABLE_XSS or VULNERABLE_IDOR %}
-<div class="alert alert-warning mt-3">
-    <strong>⚠️ VULNERABLE MODE:</strong>
-    {% if VULNERABLE_XSS %}XSS protection disabled. {% endif %}
-    {% if VULNERABLE_IDOR %}IDOR checks bypassed. {% endif %}
-</div>
-{% endif %}
 {% endblock %}
