@@ -1,11 +1,11 @@
-SecureNotes — Flask Web Security Demo
+# SecureNotes — Flask Web Security Demo
 
 A purposefully vulnerable Flask note-taking web application built to demonstrate common web security vulnerabilities and their fixes. The project ships in **two versions** side-by-side so you can see exactly what insecure code looks like and how each vulnerability is resolved.
 
+ ---
  
  
- 
-About the Project
+## About the Project
 
 SecureNotes is a simple note-taking web app where users can register, log in, create, edit, and delete personal notes. An admin panel allows privileged users to view all users and notes.
 
@@ -13,10 +13,10 @@ The app was intentionally built with  real-world security vulnerabilities that a
 
 
 
+---
 
 
-
-Project Structure
+## Project Structure
 
 securenotes/
 │
@@ -35,10 +35,10 @@ securenotes/
 └── README.md
 
 
+---
 
 
-
-Tools & Technologies
+## Tools & Technologies
 
 | Technology         | Purpose |
 |---                 |---|
@@ -51,10 +51,10 @@ Tools & Technologies
 | Jinja2             | HTML templating with auto-escaping |
 
 
+---
 
 
-
-Quick Start
+## Quick Start
 
 1. Clone the repository
 
@@ -72,12 +72,12 @@ python app_secure.py
 Visit `http://127.0.0.1:5000` in your browser.
 
 
+---
 
 
 
 
-
-Default Credentials
+## Default Credentials
 
 | Username | Password | Role  |
 |----------|----------|-------|
@@ -88,12 +88,12 @@ Default Credentials
 
 
 
+---
+
+## Vulnerabilities Found
 
 
-Vulnerabilities Found
-
-
-1. SQL Injection
+### 1. SQL Injection
 Location: Login, Register, Dashboard, Edit Note, Delete Note routes
 The app used Python f-strings to build SQL queries directly from user input:
 
@@ -104,7 +104,7 @@ query = f"SELECT * FROM users WHERE username = '{username}' AND password = '{pas
 An attacker can type `' OR '1'='1` in the username field and bypass the password check entirely, logging in as the first user in the database (usually admin). A payload like `'; DROP TABLE users; --` would destroy the entire users table.
 
 
-2. Plain-Text Password Storage
+### 2. Plain-Text Password Storage
 Location: Register route, `schema.sql`
 Passwords were stored as plain text in the database:
 
@@ -115,7 +115,7 @@ INSERT INTO users (username, password, role) VALUES ('admin', 'admin123', 'admin
 Any database breach instantly exposes every user's real password with zero effort.
 
 
-3. XSS — Cross-Site Scripting (Stored)
+### 3. XSS — Cross-Site Scripting (Stored)
 Location: Dashboard, Admin panel templates
 Note content was rendered with Jinja2's `| safe` filter, which disables HTML escaping:
 
@@ -126,7 +126,7 @@ Note content was rendered with Jinja2's `| safe` filter, which disables HTML esc
 A note containing `<script>alert(document.cookie)</script>` executes in every visitor's browser, allowing cookie theft, session hijacking, or page defacement.
 
 
-4. IDOR — Insecure Direct Object Reference
+### 4. IDOR — Insecure Direct Object Reference
 Location: Edit Note, Delete Note routes
 No ownership check was performed before allowing access to a note:
 
@@ -139,13 +139,13 @@ note = db.execute(f"SELECT * FROM notes WHERE id = {note_id}").fetchone()
 Any authenticated user could read, edit, or delete any other user's notes just by changing the ID in the URL.
 
 
-5. CSRF — Cross-Site Request Forgery
+### 5. CSRF — Cross-Site Request Forgery
 Location:All state-changing forms (create, edit, delete)
 
 No CSRF tokens were validated. A malicious page on another domain could silently submit forms on behalf of a logged-in user. The delete route was a plain `GET` link, meaning a hidden `<img src="/note/delete/1">` tag on any page would delete the note without the user clicking anything.
 
 
-7. Hardcoded Weak Secret Key
+### 6. Hardcoded Weak Secret Key
 Location: `app.py`
 
 ```python
@@ -155,7 +155,7 @@ app.secret_key = 'supersecret'
 Flask uses the secret key to sign session cookies. Anyone who knows this value can forge a valid session cookie and log in as any user, including admin, without a password.
 
 
-7. Insecure Session Cookies
+### 7. Insecure Session Cookies
 Location: Flask app config
 
 Flask's default cookie settings leave three important flags unset:
@@ -164,7 +164,7 @@ Flask's default cookie settings leave three important flags unset:
 - No `SameSite` → cookie is attached to cross-origin requests (aids CSRF)
 
 
-8. Missing Security Headers
+### 8. Missing Security Headers
 Location: HTTP responses
 
 No security headers were set, leaving the browser with no defence policy:
@@ -174,13 +174,13 @@ No security headers were set, leaving the browser with no defence policy:
 
 
 
+---
 
 
 
+## Security Fixes Applied
 
-Security Fixes Applied
-
-Fix 1 — Parameterised Queries (eliminates SQL Injection)
+### Fix 1 — Parameterised Queries (eliminates SQL Injection)
 
 Every raw f-string query was replaced with `?` placeholders:
 
@@ -195,7 +195,7 @@ cur = db.execute("SELECT * FROM users WHERE username = ?", (username,))
 The database driver treats user input strictly as data — never as SQL syntax.
 
 
-Fix 2 — Password Hashing (Werkzeug pbkdf2-sha256)
+### Fix 2 — Password Hashing (Werkzeug pbkdf2-sha256)
 
 Passwords are hashed with a per-user salt before storage:
 
@@ -212,7 +212,7 @@ if user and check_password_hash(user['password'], password):
 Even if the database is dumped, attackers get only salted hashes.
 
 
-Fix 3 — XSS Prevention (Jinja2 auto-escaping)
+### Fix 3 — XSS Prevention (Jinja2 auto-escaping)
 
 The `| safe` filter was removed from all templates. Jinja2's default auto-escaping converts `<script>` tags into harmless visible text:
 
@@ -224,7 +224,7 @@ The `| safe` filter was removed from all templates. Jinja2's default auto-escapi
 {{ note.content }}
 ```
 
-Fix 4 — IDOR Fix (ownership checks)
+### Fix 4 — IDOR Fix (ownership checks)
 
 Every note route now verifies the caller owns the note before allowing access:
 
@@ -234,7 +234,7 @@ if note['user_id'] != session['user_id'] and session.get('role') != 'admin':
 ```
 
 
-Fix 5 — CSRF Protection (Flask-WTF)
+### Fix 5 — CSRF Protection (Flask-WTF)
 
 `CSRFProtect(app)` is enabled globally. Every form includes a hidden token:
 
@@ -245,7 +245,7 @@ Fix 5 — CSRF Protection (Flask-WTF)
 The delete action was also changed from a `GET` link to a `POST` form, so it cannot be triggered by a URL alone.
 
 
-Fix 6 — Strong Random Secret Key
+### Fix 6 — Strong Random Secret Key
 
 The hardcoded key is replaced with a cryptographically random value:
 
@@ -260,7 +260,7 @@ app.secret_key = os.environ['SECRET_KEY']
 ```
 
 
-Fix 7 — Secure Session Cookies
+### Fix 7 — Secure Session Cookies
 
 All three cookie security flags are now set:
 
@@ -273,7 +273,7 @@ app.config.update(
 ```
 
 
-Fix 8 — Security Response Headers
+### Fix 8 — Security Response Headers
 
 An `after_request` hook adds protective headers to every response:
 
@@ -290,10 +290,10 @@ response.headers['Referrer-Policy']         = 'strict-origin-when-cross-origin'
 response.headers['Permissions-Policy']      = 'geolocation=(), microphone=(), camera=()'
 ```
 
+---
 
 
-
-Vulnerability vs Secure — Side by Side
+## Vulnerability vs Secure — Side by Side
 
 | Vulnerability         | app.py(Vulnerable version)      | app.py(Secure version) |
 |---                    |---                               |---|
@@ -306,6 +306,6 @@ Vulnerability vs Secure — Side by Side
 | Session cookies       | ❌ No flags set                 | ✅ HttpOnly + Secure + SameSite |
 | Security headers      | ❌ None                         | ✅ CSP, X-Frame-Options, etc. |
 
-
+---
  
 
