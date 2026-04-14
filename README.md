@@ -1,88 +1,150 @@
-# SecureNotes — Flask Web Security Demo
+# SecureNotes — Flask Web Application Security Project
 
-A purposefully vulnerable Flask note-taking web application built to demonstrate common web security vulnerabilities and their fixes. The project ships in **two versions** side-by-side so you can see exactly what insecure code(securenote_vuln - app.py) looks like and how each vulnerability is resolved(securenote - app.py).
+![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python)
+![Flask](https://img.shields.io/badge/Flask-3.x-black?logo=flask)
+![SQLite](https://img.shields.io/badge/Database-SQLite-003B57?logo=sqlite)
 
+
+---
+
+## 1. Project Title and Overview
+
+**SecureNotes** is a Flask-based web application designed to demonstrate and address common real-world web security vulnerabilities. The application is a note-taking platform where users can register, log in, and manage personal notes, while an admin panel provides privileged access to all users and notes across the system.
 
 
 <img width="1252" height="556" alt="image" src="https://github.com/user-attachments/assets/fcf1aed0-9d5c-4efe-9479-0054b146856e" />
 
+The project is delivered in **two parallel versions**:
 
- ---
- 
- 
-## About the Project
+| Version | File | Description |
+|---|---|---|
+| Vulnerable | `securenote_vuln/app.py` | All security protections intentionally disabled |
+| Secure | `securenote/app.py` | All vulnerabilities identified and fully fixed |
 
-SecureNotes is a simple note-taking web app where users can register, log in, create, edit, and delete personal notes. An admin panel allows privileged users to view all users and notes.
-
-The app was intentionally built with  real-world security vulnerabilities that are commonly found in web applications — then fixed one by one to produce a hardened secure version.
-
-
+The primary purpose of this project is educational — to show exactly what insecure code looks like in a real application, and how each vulnerability is addressed in the secure version. The main security focus areas are SQL Injection prevention, authentication hardening, session security, XSS prevention, access control enforcement, and CSRF protection.
 
 ---
 
+## 2. Features and Security Objectives
 
-## Project Structure
-```bash
+### Application Features
+
+| Feature | Description |
+|---|---|
+| User Registration | New users can create an account with a username and password |
+| User Login / Logout | Authenticated session management for all users |
+| Create Notes | Logged-in users can write and save personal notes |
+| Edit Notes | Users can update the content of their own notes |
+| Delete Notes | Users can permanently remove their own notes |
+| Admin Panel | Admin users can view all registered users and all notes in the system |
+| Role-Based Access | Regular users and admin users have different levels of access |
+
+### Security Objectives
+
+The following security improvements were implemented in the secure version:
+
+- **SQL Injection Prevention** — Parameterised queries replace all raw f-string SQL statements
+- **Secure Password Storage** — Passwords are hashed using Werkzeug's `pbkdf2-sha256` algorithm before being stored
+- **XSS Prevention** — Jinja2 auto-escaping is enforced across all templates; the `| safe` filter is removed
+- **IDOR Prevention** — Ownership verification is enforced before any note can be read, edited, or deleted
+- **CSRF Protection** — Flask-WTF CSRF tokens are required on all state-changing forms
+- **Secure Session Handling** — Session cookies are configured with `HttpOnly`, `Secure`, and `SameSite` flags
+- **Strong Secret Key** — Cryptographically random secret key replaces the hardcoded weak value
+- **Security Response Headers** — `Content-Security-Policy`, `X-Frame-Options`, `X-Content-Type-Options`, and other protective headers are applied to every response
+
+---
+
+## 3. Project Structure
+
+```
 securenotes/
 │
-├── app.py                  # Fully vulnerable version — all protections off  &&  Fully secure version — all vulnerabilities fixed
+├── securenote_vuln/                  # Vulnerable version of the application
+│   ├── app.py                        # Flask app — all security protections off
+│   ├── schema.sql                    # Database schema with plain-text passwords
+│   └── templates/
+│       ├── base.html                 # Shared layout (Bootstrap 5 navbar)
+│       ├── login.html                # Login form (no CSRF token)
+│       ├── register.html             # Registration form (no CSRF token)
+│       ├── dashboard.html            # Notes list — renders content with | safe (XSS)
+│       ├── edit_note.html            # Edit note form (no ownership check)
+│       └── admin.html                # Admin panel (no CSRF on delete)
 │
-├── schema.sql              # Database schema with hashed sample passwords
+├── securenote/                       # Secure version of the application
+│   ├── app.py                        # Flask app — all vulnerabilities fixed
+│   ├── schema.sql                    # Database schema with hashed passwords
+│   └── templates/
+│       ├── base.html                 # Shared layout (Bootstrap 5 navbar)
+│       ├── login.html                # Login form with CSRF token
+│       ├── register.html             # Registration form with CSRF token
+│       ├── dashboard.html            # Notes list — auto-escaped content, POST delete
+│       ├── edit_note.html            # Edit note form with CSRF token
+│       └── admin.html                # Admin panel with CSRF-protected delete
 │
-├── templates/
-│   ├── base.html           # Shared layout (Bootstrap 5 navbar, flash messages)
-│   ├── login.html          # Login form
-│   ├── register.html       # Registration form
-│   ├── dashboard.html      # Notes list + create note form
-│   ├── edit_note.html      # Edit a single note
-│   └── admin.html          # Admin panel (users + all notes)
-│
-└── README.md
+└── README.md                         # Project documentation
 ```
 
----
+### Key Files Explained
 
-
-## Tools & Technologies
-
-| Technology         | Purpose |
-|---                 |---|
-| Python 3           | Backend language |
-| Flask              | Web framework |
-| SQLite             | Database |
-| Werkzeug           | Password hashing (`generate_password_hash`) |
-| Flask-WTF          | CSRF protection |
-| Bootstrap 5        | Frontend UI |
-| Jinja2             | HTML templating with auto-escaping |
-
+| File | Purpose |
+|---|---|
+| `securenote_vuln/app.py` | Intentionally vulnerable Flask app — used to demonstrate attacks |
+| `securenote/app.py` | Hardened Flask app — all 8 vulnerabilities resolved |
+| `schema.sql` (vulnerable) | Creates tables and inserts users with plain-text passwords |
+| `schema.sql` (secure) | Creates tables and inserts users with properly hashed passwords |
+| `templates/base.html` | Master layout shared by all pages — navbar and flash messages |
+| `templates/dashboard.html` | Main user page — note list, create form, edit/delete actions |
+| `templates/admin.html` | Admin-only page — full user list and all notes |
 
 ---
 
+## 4. Setup and Installation Instructions
 
-## Quick Start
+### Prerequisites
 
-1. Clone the repository
+- Python 3.10 or higher
+- pip (Python package manager)
+- Git
+
+### Step 1 — Clone the Repository
 
 ```bash
 git clone https://github.com/your-username/securenotes.git
-cd securenotes/securenotes-main
+cd securenotes
 ```
 
-2. Run the application and check
+### Step 2 — Create a Virtual Environment (Recommended)
 
 ```bash
-python app_secure.py
+python -m venv venv
+
+# Windows
+venv\Scripts\activate
+
+# Mac / Linux
+source venv/bin/activate
+```
+
+
+### Step 3 — Run the Vulnerable Version
+
+```bash
+cd securenote_vuln
+python app.py
+```
+
+### Step 4 — Run the Secure Version
+
+```bash
+cd securenote
+python app.py
 ```
 
 Visit `http://127.0.0.1:5000` in your browser.
 
+> **Note:** The database (`securenotes.db`) is created automatically on first run from `schema.sql`. If you switch between the vulnerable and secure versions, delete `securenotes.db` before starting the other version to ensure the correct password format is used.
 
----
-
-
-
-
-## Default Credentials
+### Default Credentials
 
 | Username | Password | Role  |
 |----------|----------|-------|
@@ -90,227 +152,279 @@ Visit `http://127.0.0.1:5000` in your browser.
 | `alice`  | `alice123` | User  |
 | `bob`    | `bob123`   | User  |
 
+---
 
+## 5. Usage Guidelines
 
+### Registering an Account
+
+1. Navigate to `http://127.0.0.1:5000`
+2. Click **Register new account**
+3. Enter a username and password (minimum 8 characters enforced in the secure version)
+4. Click **Register** — you will be redirected to the login page
+
+### Logging In
+
+1. Enter your username and password on the login page
+2. Click **Login** — you will be redirected to your personal dashboard
+3. The navbar displays your username and role badge
+
+### Managing Notes
+
+- **Create** — Type a note in the input field on the dashboard and click **Add Note**
+- **Edit** — Click the **Edit** button next to any note, update the content, and click **Save Changes**
+- **Delete** — Click the **Delete** button next to any note and confirm the prompt
+
+> In the **vulnerable version**, any logged-in user can edit or delete any note by changing the ID in the URL (e.g. `/note/edit/1`). In the **secure version**, this is blocked — users can only access their own notes and receive a `403 Forbidden` otherwise.
+
+### Admin Panel
+
+1. Log in with the `admin` account
+2. Click **Admin Panel** in the navbar
+3. The **Users** tab shows all registered accounts and their note counts
+4. The **Notes** tab shows all notes across all users with delete options
+
+### Demonstrating Vulnerabilities (Vulnerable Version Only)
+
+| Attack | How to Test |
+|---|---|
+| SQL Injection | Enter `' OR '1'='1` as the username with any password on the login page |
+| Stored XSS | Create a note containing `<script>alert('XSS')</script>` and reload the dashboard |
+| IDOR | Log in as `alice`, then visit `/note/edit/1` to edit `admin`'s note |
+| CSRF | Visit `/note/delete/1` directly in the browser address bar |
 
 ---
 
-## Vulnerabilities Found
+## 6. Security Improvements
 
+### Vulnerability vs Secure — Side by Side
 
-### 1. SQL Injection
-Location: Login, Register, Dashboard, Edit Note, Delete Note routes
-The app used Python f-strings to build SQL queries directly from user input:
-
-```python
-query = f"SELECT * FROM users WHERE username = '{username}' AND password = '{password}'"
-```
-
-An attacker can type `' OR '1'='1` in the username field and bypass the password check entirely, logging in as the first user in the database (usually admin). A payload like `'; DROP TABLE users; --` would destroy the entire users table.
-
-
-### 2. Plain-Text Password Storage
-Location: Register route, `schema.sql`
-Passwords were stored as plain text in the database:
-
-```sql
-INSERT INTO users (username, password, role) VALUES ('admin', 'admin123', 'admin')
-```
-
-Any database breach instantly exposes every user's real password with zero effort.
-
-
-### 3. XSS — Cross-Site Scripting (Stored)
-Location: Dashboard, Admin panel templates
-Note content was rendered with Jinja2's `| safe` filter, which disables HTML escaping:
-
-```html
-{{ note.content | safe }}
-```
-
-A note containing `<script>alert(document.cookie)</script>` executes in every visitor's browser, allowing cookie theft, session hijacking, or page defacement.
-
-
-### 4. IDOR — Insecure Direct Object Reference
-Location: Edit Note, Delete Note routes
-No ownership check was performed before allowing access to a note:
-
-```python
-# Any logged-in user could edit /note/edit/1, /note/edit/2, etc.
-note = db.execute(f"SELECT * FROM notes WHERE id = {note_id}").fetchone()
-# Missing: check that note['user_id'] == session['user_id']
-```
-
-Any authenticated user could read, edit, or delete any other user's notes just by changing the ID in the URL.
-
-
-### 5. CSRF — Cross-Site Request Forgery
-Location:All state-changing forms (create, edit, delete)
-
-No CSRF tokens were validated. A malicious page on another domain could silently submit forms on behalf of a logged-in user. The delete route was a plain `GET` link, meaning a hidden `<img src="/note/delete/1">` tag on any page would delete the note without the user clicking anything.
-
-
-### 6. Hardcoded Weak Secret Key
-Location: `app.py`
-
-```python
-app.secret_key = 'supersecret'
-```
-
-Flask uses the secret key to sign session cookies. Anyone who knows this value can forge a valid session cookie and log in as any user, including admin, without a password.
-
-
-### 7. Insecure Session Cookies
-Location: Flask app config
-
-Flask's default cookie settings leave three important flags unset:
-- No `HttpOnly` → JavaScript can read the cookie (XSS can steal it)
-- No `Secure` → cookie is sent over plain HTTP (network sniffing)
-- No `SameSite` → cookie is attached to cross-origin requests (aids CSRF)
-
-
-### 8. Missing Security Headers
-Location: HTTP responses
-
-No security headers were set, leaving the browser with no defence policy:
-- No `Content-Security-Policy` → injected scripts execute freely
-- No `X-Frame-Options` → the app can be embedded in iframes (clickjacking)
-- No `X-Content-Type-Options` → MIME-sniffing attacks possible
-
-
+| # | Vulnerability | Vulnerable `app.py` | Secure `app.py` |
+|---|---|---|---|
+| 1 | SQL Injection | Raw f-string queries |  Parameterised `?` placeholders |
+| 2 | Password Storage |  Plain text |  Hashed (pbkdf2-sha256) |
+| 3 | XSS |  `\| safe` disables escaping |  Jinja2 auto-escaping |
+| 4 | IDOR |  No ownership check |  `user_id` verified before access |
+| 5 | CSRF |  No token, DELETE via GET |  Flask-WTF tokens, POST only |
+| 6 | Secret Key |  `'supersecret'` hardcoded |  `secrets.token_hex(32)` |
+| 7 | Session Cookies |  No flags set |  HttpOnly + Secure + SameSite |
+| 8 | Security Headers |  None |  CSP, X-Frame-Options, and more |
 
 ---
 
-
-
-## Security Fixes Applied
-
-### Fix 1 — Parameterised Queries (eliminates SQL Injection)
-
-Every raw f-string query was replaced with `?` placeholders:
+### Fix 1 — SQL Injection → Parameterised Queries
 
 ```python
-# Before (vulnerable)
+#  Vulnerable
 query = f"SELECT * FROM users WHERE username = '{username}' AND password = '{password}'"
 
-# After (secure)
+#  Secure
 cur = db.execute("SELECT * FROM users WHERE username = ?", (username,))
 ```
+User input is treated strictly as data — never as SQL syntax. Payloads like `' OR '1'='1` or `'; DROP TABLE users; --` have no effect.
 
-The database driver treats user input strictly as data — never as SQL syntax.
+---
 
-
-### Fix 2 — Password Hashing (Werkzeug pbkdf2-sha256)
-
-Passwords are hashed with a per-user salt before storage:
+### Fix 2 — Plain-Text Passwords → Password Hashing
 
 ```python
-# On register
+#  Vulnerable — stored as-is
+db.execute(f"INSERT INTO users (username, password) VALUES ('{username}', '{password}')")
+
+#  Secure — hashed before storage, verified on login
 hashed = generate_password_hash(password)
 db.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", (username, hashed, role))
 
-# On login
 if user and check_password_hash(user['password'], password):
     ...
 ```
 
-Even if the database is dumped, attackers get only salted hashes.
+---
 
-
-### Fix 3 — XSS Prevention (Jinja2 auto-escaping)
-
-The `| safe` filter was removed from all templates. Jinja2's default auto-escaping converts `<script>` tags into harmless visible text:
+### Fix 3 — XSS → Jinja2 Auto-Escaping
 
 ```html
-<!-- Before (vulnerable) -->
+<!--  Vulnerable — executes injected scripts -->
 {{ note.content | safe }}
 
-<!-- After (secure) -->
+<!--  Secure — converts <script> to visible text -->
 {{ note.content }}
 ```
 
-### Fix 4 — IDOR Fix (ownership checks)
+---
 
-Every note route now verifies the caller owns the note before allowing access:
+### Fix 4 — IDOR → Ownership Check
 
 ```python
+#  Secure — added after fetching the note in edit and delete routes
 if note['user_id'] != session['user_id'] and session.get('role') != 'admin':
     abort(403)
 ```
 
+---
 
-### Fix 5 — CSRF Protection (Flask-WTF)
+### Fix 5 — CSRF → Flask-WTF Token
 
-`CSRFProtect(app)` is enabled globally. Every form includes a hidden token:
+```python
+#  Secure — enabled globally in app.py
+csrf = CSRFProtect(app)
+```
 
 ```html
+<!--  Added to every POST form in all templates -->
 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 ```
 
-The delete action was also changed from a `GET` link to a `POST` form, so it cannot be triggered by a URL alone.
+The delete action was also changed from a `GET` link to a `POST` form — a plain URL visit can no longer trigger deletion.
 
+---
 
-### Fix 6 — Strong Random Secret Key
-
-The hardcoded key is replaced with a cryptographically random value:
+### Fix 6 — Hardcoded Secret Key → Random Key
 
 ```python
+#  Vulnerable
+app.secret_key = 'supersecret'
+
+#  Secure
 app.secret_key = secrets.token_hex(32)
 ```
 
-For production, load from an environment variable:
+---
+
+### Fix 7 — Insecure Cookies → Secure Cookie Flags
 
 ```python
-app.secret_key = os.environ['SECRET_KEY']
-```
-
-
-### Fix 7 — Secure Session Cookies
-
-All three cookie security flags are now set:
-
-```python
+#  Secure
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,   # JS cannot read the cookie
     SESSION_COOKIE_SECURE=True,     # HTTPS only
-    SESSION_COOKIE_SAMESITE='Lax',  # Blocks cross-origin requests
+    SESSION_COOKIE_SAMESITE='Lax',  # Blocks cross-origin attachment
 )
 ```
 
+---
 
-### Fix 8 — Security Response Headers
-
-An `after_request` hook adds protective headers to every response:
+### Fix 8 — Missing Headers → Security Response Headers
 
 ```python
+#  Secure — applied to every response via after_request hook
 response.headers['Content-Security-Policy'] = (
     "default-src 'self'; "
     "script-src 'self' https://cdn.jsdelivr.net; "
-    "style-src 'self' https://cdn.jsdelivr.net; "
-    ...
+    "style-src 'self' https://cdn.jsdelivr.net;"
 )
-response.headers['X-Frame-Options']         = 'DENY'
-response.headers['X-Content-Type-Options']  = 'nosniff'
-response.headers['Referrer-Policy']         = 'strict-origin-when-cross-origin'
-response.headers['Permissions-Policy']      = 'geolocation=(), microphone=(), camera=()'
+response.headers['X-Frame-Options']        = 'DENY'
+response.headers['X-Content-Type-Options'] = 'nosniff'
+response.headers['Referrer-Policy']        = 'strict-origin-when-cross-origin'
+response.headers['Permissions-Policy']     = 'geolocation=(), microphone=(), camera=()'
 ```
 
 ---
 
+## 7. Testing Process
 
-## Vulnerability vs Secure — Side by Side
+### Testing Approach
 
-| Vulnerability         | app.py(Vulnerable version)      | app.py(Secure version) |
-|---                    |---                               |---|
-| SQL Injection         | ❌ Raw f-string queries         | ✅ Parameterised `?` placeholders |
-| Password storage      | ❌ Plain text                   | ✅ Hashed (pbkdf2-sha256) |
-| XSS                   | ❌ `\| safe` disables escaping  | ✅ Jinja2 auto-escaping |
-| IDOR                  | ❌ No ownership check           | ✅ `user_id` verified before access |
-| CSRF                  | ❌ No token, DELETE via GET     | ✅ Flask-WTF tokens, POST only |
-| Secret key            | ❌ `'supersecret'` hardcoded    | ✅ `secrets.token_hex(32)` |
-| Session cookies       | ❌ No flags set                 | ✅ HttpOnly + Secure + SameSite |
-| Security headers      | ❌ None                         | ✅ CSP, X-Frame-Options, etc. |
+Both versions of the application were tested using **manual black-box testing** and **browser-based attack simulation** to validate the presence of vulnerabilities in the vulnerable version and confirm their resolution in the secure version.
 
 ---
- 
+
+### Tools Used
+
+| Tool | Purpose |
+|---|---|
+| **Browser DevTools** (Firefox / Chrome) | Inspecting cookies, headers, network requests, and console output |
+| **Browser Address Bar** | Manually crafting URLs to test IDOR and CSRF via GET |
+| **Application Forms** | Submitting attack payloads directly through the UI |
+| **SQLite Browser** | Inspecting the raw database to verify password storage format |
+| **Python `werkzeug`** | Verifying `check_password_hash` behaviour against stored values |
+
+---
+
+### Test Cases and Findings
+
+#### SQL Injection
+
+| Test Input | Vulnerable Result | Secure Result |
+|---|---|---|
+| Username: `' OR '1'='1`, Password: *(blank)* |  Login bypassed — logged in as admin |  Rejected — Invalid credentials |
+| Username: `'; DROP TABLE users; --` |  Users table destroyed |  Input treated as data, no effect |
+
+#### XSS — Cross-Site Scripting
+
+| Test Input | Vulnerable Result | Secure Result |
+|---|---|---|
+| Note: `<script>alert('XSS')</script>` |  Alert executes on dashboard load |  Displayed as plain text |
+| Note: `<img src=x onerror=alert(1)>` |  Alert executes |  Rendered as escaped text |
+
+#### IDOR — Insecure Direct Object Reference
+
+| Test | Vulnerable Result | Secure Result |
+|---|---|---|
+| Logged in as `alice`, visit `/note/edit/1` |  Admin's note loads and is editable |  403 Forbidden |
+| Visit `/note/delete/1` as any logged-in user |  Note deleted without ownership check |  403 Forbidden |
+
+#### CSRF — Cross-Site Request Forgery
+
+| Test | Vulnerable Result | Secure Result |
+|---|---|---|
+| Visit `/note/delete/1` directly in browser |  Note deleted via GET request |  Method Not Allowed — POST required |
+| POST form submitted without `csrf_token` |  Request accepted |  400 Bad Request — token missing |
+
+#### Password Storage
+
+| Test | Vulnerable Result | Secure Result |
+|---|---|---|
+| Inspect `securenotes.db` users table |  Passwords visible as plain text (`admin123`) |  Stored as `pbkdf2:sha256:...` hash |
+
+#### Session Cookies
+
+| Test | Vulnerable Result | Secure Result |
+|---|---|---|
+| Inspect session cookie in DevTools |  No `HttpOnly`, `Secure`, or `SameSite` flags |  All three flags present |
+
+#### Security Headers
+
+| Test | Vulnerable Result | Secure Result |
+|---|---|---|
+| Inspect response headers in DevTools Network tab |  No CSP, no X-Frame-Options |  All headers present and correctly configured |
+
+---
+
+### Key Findings Summary
+
+- All **8 vulnerabilities** were successfully demonstrated in the vulnerable version
+- All **8 vulnerabilities** were confirmed resolved in the secure version
+- **SQL Injection on the login form** was the highest-risk vulnerability — it granted full admin access with no password
+- **Plain-text password storage** meant any database breach would instantly expose all user credentials
+- The **CSRF + GET delete** combination meant any `<img>` tag or link could silently delete user data without any interaction
+
+---
+
+## 8. Contributions and References
+
+### Frameworks and Libraries
+
+| Resource | Purpose | Link |
+|---|---|---|
+| Flask | Python web framework | https://flask.palletsprojects.com |
+| Werkzeug | Password hashing utilities | https://werkzeug.palletsprojects.com |
+| Flask-WTF | CSRF protection for Flask forms | https://flask-wtf.readthedocs.io |
+| Bootstrap 5 | Frontend UI components and layout | https://getbootstrap.com |
+| Jinja2 | HTML templating engine with auto-escaping | https://jinja.palletsprojects.com |
+| SQLite3 | Lightweight embedded database | https://www.sqlite.org |
+
+### Security References
+
+| Resource | Link |
+|---|---|
+| OWASP Top 10 Web Application Security Risks | https://owasp.org/www-project-top-ten |
+| OWASP SQL Injection Prevention Cheat Sheet | https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html |
+| OWASP XSS Prevention Cheat Sheet | https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html |
+| OWASP CSRF Prevention Cheat Sheet | https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html |
+| OWASP Session Management Cheat Sheet | https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html |
+| Flask Security Considerations (Official Docs) | https://flask.palletsprojects.com/en/latest/security |
+| MDN Web Docs — Content Security Policy | https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP |
+
+---
 
