@@ -1,6 +1,11 @@
 # SecureNotes — Flask Web Security Demo
 
-A purposefully vulnerable Flask note-taking web application built to demonstrate common web security vulnerabilities and their fixes. The project ships in **two versions** side-by-side so you can see exactly what insecure code looks like and how each vulnerability is resolved.
+A purposefully vulnerable Flask note-taking web application built to demonstrate common web security vulnerabilities and their fixes. The project ships in **two versions** side-by-side so you can see exactly what insecure code(securenote_vuln - app.py) looks like and how each vulnerability is resolved(securenote - app.py).
+
+
+
+<img width="1252" height="556" alt="image" src="https://github.com/user-attachments/assets/fcf1aed0-9d5c-4efe-9479-0054b146856e" />
+
 
  ---
  
@@ -17,7 +22,7 @@ The app was intentionally built with  real-world security vulnerabilities that a
 
 
 ## Project Structure
-
+```bash
 securenotes/
 │
 ├── app.py                  # Fully vulnerable version — all protections off  &&  Fully secure version — all vulnerabilities fixed
@@ -33,7 +38,7 @@ securenotes/
 │   └── admin.html          # Admin panel (users + all notes)
 │
 └── README.md
-
+```
 
 ---
 
