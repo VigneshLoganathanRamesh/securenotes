@@ -4,6 +4,11 @@ from flask import Flask, render_template, request, redirect, url_for, session, a
 
 app = Flask(__name__)
 
+
+# Vulnerability 1- Hardcoded secret key.
+# The secret key is hard coded and extremely weak.
+# When a person cracks it, he/she can create session cookies and log in as any user (including the admin) without a password.
+
 app.secret_key = 'supersecret'
 
 DATABASE = 'securenotes.db'
@@ -48,6 +53,22 @@ def admin_required(f):
 
 
 
+# Vulnerability 2 - Lack of security headers.
+# There are no security headers.
+# This means:
+# 	- No CSP → injected scripts won’t be blocked
+# 	- No X-Frame-Options → app can be embedded (clickjacking risk)
+# 	- No X-Content-Type-Options means that browser can guess the file types (MIME sniffing).
+
+
+# Vulnerability 3 - SQL Injection (login)
+# The query is directly typed into the SQL query.
+# This makes the login vulnerable to SQL injection.
+# Example:
+# 	' OR '1'='1 → bypass login
+# 	'; DROP TABLE users; -- → deletes the users table
+
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -56,6 +77,9 @@ def login():
         username = request.form['username']
         password = request.form['password']
         db = get_db()
+
+        # Here an f-string implies straight user input to SQL.
+        # No parameterization or validation.
 
         query = f"SELECT * FROM users WHERE username = '{username}' AND password = '{password}'"
         user = db.execute(query).fetchone()
@@ -70,6 +94,9 @@ def login():
     return render_template('login.html', error=error)
 
 
+# Vulnerability 3 & 4 - SQL Injection (register) and plain-text passwords.
+# The passwords are stored in their original form (there are not hashed).
+# In the event of a leak of the database, all user passwords are revealed immediately.
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -77,9 +104,10 @@ def register():
     error = None
     if request.method == 'POST':
         username = request.form['username']
-        password = request.form['password']   
+        password = request.form['password']   # stored as plain text
         db = get_db()
         try:
+            #Once more f-string is used → prone to SQL injection when registering.
             db.execute(
                 f"INSERT INTO users (username, password, role) "
                 f"VALUES ('{username}', '{password}', 'user')"
@@ -93,14 +121,15 @@ def register():
     return render_template('register.html', error=error)
 
 
-
-
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('login'))
 
 
+# Vulnerability 3 - SQL Injection (dashboard).
+# The query directly involves the use of session [userid].
+# In case of tampering with the session (which might occur because of a weak secret key), an attacker would be able to interfere with it and access the notes of other users.
 
 
 @app.route('/dashboard')
@@ -112,10 +141,20 @@ def dashboard():
     )
     notes = cur.fetchall()
     db.close()
+    # Vulnerability 5 — Stored XSS
+    # In the template, notes are translated into safe.
+    # It implies that any HTML/JS (e.g. <script> will run in the browser.
+    # Stored XSS applies to all users that see the note.
+
 
     return render_template('dashboard.html', notes=notes)
 
 
+
+#Vulnerability 3, 5, 6
+# It is susceptible to SQL injection as the query is used with the input of the user.
+# The stored XSS can be caused by storing malicious content and rendering it later.
+# It has no CSRF protection and thus another web site may trick a logged-in user into making a request without their awareness (e.g. creating a note).
 
 
 @app.route('/note/create', methods=['POST'])
@@ -131,6 +170,11 @@ def create_note():
     return redirect(url_for('dashboard'))
 
 
+#Vulnerability 2, 3, 6 — Edit note
+# No ownership verification: any user that is logged in can edit any note changing the ID (IDOR).
+# Query is susceptible to SQL injection.
+# No CSRF protection on POST request
+
 
 @app.route('/note/edit/<int:note_id>', methods=['GET', 'POST'])
 @login_required
@@ -141,6 +185,7 @@ def edit_note(note_id):
     if not note:
         abort(404)
 
+    # No verification is made to confirm that the note is of the current user.
 
     if request.method == 'POST':
         new_content = request.form['content']
@@ -153,7 +198,11 @@ def edit_note(note_id):
     return render_template('edit_note.html', note=note)
 
 
-
+# Vulnerability 2, 3, 6 — Delete note
+# Anyone who logs in can just change the ID (IDOR) to delete any note.
+# SQL injection in delete statement.
+# Uses GET for deletion → unsafe and vulnerable to CSRF
+# Even accessing an ill-intentioned link might cause deletion.
 
 
 @app.route('/note/delete/<int:note_id>')
@@ -164,8 +213,6 @@ def delete_note(note_id):
     db.commit()
     db.close()
     return redirect(url_for('dashboard'))
-
-
 
 
 @app.route('/admin')
@@ -188,14 +235,19 @@ def admin_panel():
 
 
 
+# Vulnerability 7 - Weak session cookies.
+# The flags that are missing in the session cookies are:
+# 	- HttpOnly → JS can access them (bad with XSS)
+# 	- Secure → sent over HTTP (can be intercepted)
+# 	- SameSite → permits cross-site requests (aids CSRF attacks)
+
+
 
 
 @app.context_processor
 def inject_vars():
-    
+    # All notes are always sent as raw HTML (|Safe|), and stored XSS is feasible throughout the app.
     return dict(VULNERABLE_XSS=True)
-
-
 
 
 @app.route('/')
