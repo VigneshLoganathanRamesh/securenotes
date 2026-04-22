@@ -18,8 +18,8 @@ The project is delivered in **two parallel versions**:
 
 | Version | File | Description |
 |---|---|---|
-| Vulnerable | `securenote_vuln/app.py` | All security protections intentionally disabled |
-| Secure | `securenote/app.py` | All vulnerabilities identified and fully fixed |
+| Vulnerable | `main/app.py` | All security protections intentionally disabled |
+| Secure | `Secure-code/app.py` | All vulnerabilities identified and fully fixed |
 
 The primary purpose of this project is educational — to show exactly what insecure code looks like in a real application, and how each vulnerability is addressed in the secure version. The main security focus areas are SQL Injection prevention, authentication hardening, session security, XSS prevention, access control enforcement, and CSRF protection.
 
@@ -59,7 +59,7 @@ The following security improvements were implemented in the secure version:
 ```
 securenotes/
 │
-├── securenote_vuln/                  # Vulnerable version of the application
+├── main/                  # Vulnerable version of the application
 │   ├── app.py                        # Flask app — all security protections off
 │   ├── schema.sql                    # Database schema with plain-text passwords
 │   └── templates/
@@ -70,7 +70,7 @@ securenotes/
 │       ├── edit_note.html            # Edit note form (no ownership check)
 │       └── admin.html                # Admin panel (no CSRF on delete)
 │
-├── securenote/                       # Secure version of the application
+├── secure-code/                       # Secure version of the application
 │   ├── app.py                        # Flask app — all vulnerabilities fixed
 │   ├── schema.sql                    # Database schema with hashed passwords
 │   └── templates/
@@ -88,8 +88,8 @@ securenotes/
 
 | File | Purpose |
 |---|---|
-| `securenote_vuln/app.py` | Intentionally vulnerable Flask app — used to demonstrate attacks |
-| `securenote/app.py` | Hardened Flask app — all 8 vulnerabilities resolved |
+| `main/app.py` | Intentionally vulnerable Flask app — used to demonstrate attacks |
+| `secure-code/app.py` | Hardened Flask app — all 8 vulnerabilities resolved |
 | `schema.sql` (vulnerable) | Creates tables and inserts users with plain-text passwords |
 | `schema.sql` (secure) | Creates tables and inserts users with properly hashed passwords |
 | `templates/base.html` | Master layout shared by all pages — navbar and flash messages |
