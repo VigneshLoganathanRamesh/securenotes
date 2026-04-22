@@ -1,4 +1,5 @@
 # SecureNotes — Flask Web Application Security Project
+## (main branch --> vulnerable code && securecode branch --> security issue fixed code).
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python)
 ![Flask](https://img.shields.io/badge/Flask-3.x-black?logo=flask)
